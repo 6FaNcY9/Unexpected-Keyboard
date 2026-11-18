@@ -48,7 +48,9 @@ jobs:
         test "$(printf '%s\n' "$apk" | wc -l)" -eq 1
         "$bt/apksigner" verify --print-certs "$apk" | tee cert.txt
         grep -q 'CN=ukpong' cert.txt
+        echo "ok: signed by the pong key"
         "$bt/aapt2" dump badging "$apk" | grep -E "^package: name='juloo\.keyboard2\.pong'"
+        echo "ok: package juloo.keyboard2.pong"
         "$bt/aapt2" dump permissions "$apk" | tee permissions.txt
         # Installs next to F-Droid's juloo.keyboard2: no permission or provider
         # authority may stay in its namespace.
@@ -63,6 +65,7 @@ jobs:
         want=$(printf '%s\n' android.permission.ACCESS_NETWORK_STATE android.permission.INTERNET android.permission.RECEIVE_BOOT_COMPLETED android.permission.VIBRATE juloo.keyboard2.pong.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION)
         echo "uses-permission: $got"
         test "$got" = "$want"
+        echo "ok: no namespace conflicts, permissions as upstream"
         sha256sum "$apk" | tee -a cert.txt
 
     - name: Upload release APK
