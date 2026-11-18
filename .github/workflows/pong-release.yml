@@ -1,0 +1,74 @@
+name: pong release
+
+# Signed release APK of the Grey Console fork (applicationId juloo.keyboard2.pong).
+# The key is only in the secrets below and in the owner's Bitwarden.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - grey-console
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v7
+      with:
+        submodules: true
+
+    - uses: actions/setup-java@v6
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v6
+      with:
+        gradle-version: 8.14.4
+
+    - name: Restore release keystore
+      env:
+        KS_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+      run: printf '%s' "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+    - name: Test and build release APK
+      env:
+        RELEASE_KEYSTORE: ${{ runner.temp }}/release.jks
+        RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      run: gradle test assembleRelease
+
+    - name: Check the APK
+      run: |
+        set -euo pipefail
+        bt=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+        apk=$(ls build/outputs/apk/release/*.apk)
+        test "$(printf '%s\n' "$apk" | wc -l)" -eq 1
+        "$bt/apksigner" verify --print-certs "$apk" | tee cert.txt
+        grep -q 'CN=ukpong' cert.txt
+        "$bt/aapt2" dump badging "$apk" | grep -E "^package: name='juloo\.keyboard2\.pong'"
+        "$bt/aapt2" dump permissions "$apk" | tee permissions.txt
+        # Installs next to F-Droid's juloo.keyboard2: no permission or provider
+        # authority may stay in its namespace.
+        if grep -v '^package:' permissions.txt | grep 'juloo\.keyboard2\.' | grep -v 'juloo\.keyboard2\.pong\.'; then
+          echo "permission in juloo.keyboard2.* outside .pong"; exit 1
+        fi
+        if "$bt/aapt2" dump xmltree --file AndroidManifest.xml "$apk" | grep 'android:authorities' | grep 'juloo\.keyboard2' | grep -v 'juloo\.keyboard2\.pong\.'; then
+          echo "provider authority outside juloo.keyboard2.pong"; exit 1
+        fi
+        # Same permissions as upstream 2.2.1.
+        got=$(grep -oE "uses-permission: name='[^']+'" permissions.txt | sed "s/.*name='//; s/'$//" | sort)
+        want=$(printf '%s\n' android.permission.ACCESS_NETWORK_STATE android.permission.INTERNET android.permission.RECEIVE_BOOT_COMPLETED android.permission.VIBRATE juloo.keyboard2.pong.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION)
+        echo "uses-permission: $got"
+        test "$got" = "$want"
+        sha256sum "$apk" | tee -a cert.txt
+
+    - name: Upload release APK
+      uses: actions/upload-artifact@v7
+      with:
+        name: uk-pong-release
+        path: |
+          build/outputs/apk/release/*.apk
+          cert.txt
