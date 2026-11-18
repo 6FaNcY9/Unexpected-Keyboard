@@ -45,6 +45,7 @@ public final class Suggestions
       clear();
     else
       query_suggestions(word);
+    android.util.Log.i("ukpong-diag", "word len=" + word.length() + " dict=" + (_config.current_dictionary != null) + " count=" + count); // DIAG
     _callback.set_suggestions(this);
   }
 

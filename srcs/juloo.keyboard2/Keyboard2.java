@@ -212,6 +212,13 @@ public class Keyboard2 extends InputMethodService
       _config.suggestions_enabled
       && _config.editor_config.should_show_candidates_view
       && !_config.split_layout;
+    Log.i("ukpong-diag", "bar=" + should_show + " sugg=" + _config.suggestions_enabled // DIAG
+        + " editor=" + _config.editor_config.should_show_candidates_view + " split=" + _config.split_layout // DIAG
+        + " installed=" + (_config.device_locales == null ? "locales-null" : String.valueOf(_config.device_locales.installed.size())) // DIAG
+        + " default=" + (_config.device_locales == null || _config.device_locales.default_ == null ? "null" : _config.device_locales.default_.lang_tag + "/" + _config.device_locales.default_.dictionary) // DIAG
+        + " layout=" + _config.get_current_layout() + " selected=" + _dictionaries.get_selected(_config) // DIAG
+        + " dict=" + _config.current_dictionary_name + " loaded=" + (_config.current_dictionary != null) // DIAG
+        + " switch=" + _config.should_show_dictionary_switch); // DIAG
     if (should_show)
     {
       _candidates_view.refresh_config(_config);

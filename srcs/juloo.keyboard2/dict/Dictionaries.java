@@ -145,7 +145,7 @@ public final class Dictionaries
   Cdict[] load_uncached(String dict_name)
   {
     if (!_installed_dictionaries.contains(dict_name))
-      return null;
+    { android.util.Log.w("ukpong-diag", "dict not installed: " + dict_name + " installed=" + _installed_dictionaries); return null; } // DIAG
     try
     {
       FileInputStream inp = _context.openFileInput(dict_file_name(dict_name));
@@ -153,8 +153,8 @@ public final class Dictionaries
       inp.close();
       return Cdict.of_bytes(data);
     }
-    catch (IOException e) { return null; }
-    catch (Cdict.ConstructionError e) { return null; }
+    catch (IOException e) { android.util.Log.w("ukpong-diag", "dict io " + dict_name, e); return null; } // DIAG
+    catch (Cdict.ConstructionError e) { android.util.Log.w("ukpong-diag", "dict bad " + dict_name, e); return null; } // DIAG
   }
 
   void save()
