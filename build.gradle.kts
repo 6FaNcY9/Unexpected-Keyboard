@@ -17,7 +17,7 @@ android {
   compileSdkVersion = "android-36"
 
   defaultConfig {
-    applicationId = "juloo.keyboard2"
+    applicationId = "juloo.keyboard2.pong" // pong fork: installs next to F-Droid's juloo.keyboard2
     minSdk = 21
     targetSdk { version = release(36) }
     versionCode = 58
@@ -75,7 +75,8 @@ android {
         "proguard-rules.pro")
       isShrinkResources = true
       isDebuggable = false
-      resValue("string", "app_name", "@string/app_name_release")
+      resValue("string", "app_name", "Unexpected Keyboard pong")
+      versionNameSuffix = "-pong"
       signingConfig = signingConfigs["release"]
       isCrunchPngs = false // Reproducibility
     }
