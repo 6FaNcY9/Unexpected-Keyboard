@@ -57,6 +57,18 @@ public final class DeviceLocales
   private static List<Loc> get_installed_locales(String pkg, InputMethodManager imm)
   {
     List<Loc> locs = new ArrayList<Loc>();
+    try { // DIAG
+      StringBuilder d = new StringBuilder("locales pkg=" + pkg + " all=" + imm.getInputMethodList().size() + " enabled=["); // DIAG
+      for (InputMethodInfo i : imm.getEnabledInputMethodList()) d.append(i.getId()).append(' '); // DIAG
+      d.append("] cur=").append(imm.getEnabledInputMethodSubtypeList(null, true).size()); // DIAG
+      for (InputMethodInfo i : imm.getInputMethodList()) if (i.getPackageName().equals(pkg)) // DIAG
+        d.append(" own=").append(i.getId()).append(" n=").append(i.getSubtypeCount()) // DIAG
+          .append(" impl=").append(imm.getEnabledInputMethodSubtypeList(i, true).size()) // DIAG
+          .append(" expl=").append(imm.getEnabledInputMethodSubtypeList(i, false).size()); // DIAG
+      InputMethodSubtype c = imm.getCurrentInputMethodSubtype(); // DIAG
+      d.append(" current=").append(c == null ? "null" : c.getLanguageTag() + "#" + c.hashCode()); // DIAG
+      android.util.Log.i("ukpong-diag", d.toString()); // DIAG
+    } catch (Exception e) { android.util.Log.w("ukpong-diag", "locales diag failed", e); } // DIAG
     for (InputMethodInfo imi : imm.getEnabledInputMethodList())
       if (imi.getPackageName().equals(pkg))
       {
